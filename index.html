@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/fontawesome.min.css"
+    integrity="sha384-jLKHWM3JRmfMU0A5x5AkjWkw/EYfGUAGagvnfryNV3F9VqM98XiIH7VBGVoxVSc7" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css"
+    integrity="sha512-IgmDkwzs96t4SrChW29No3NXBIBv8baW490zk5aXvhCD8vuZM3yUSkbyTBcXohkySecyzIrUwiF/qV0cuPcL3Q=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <script src="https://kit.fontawesome.com/bdf7710545.js" crossorigin="anonymous"></script>
+  <title>Location Finder</title>
+
+  <style>
+    .icon-remove,
+    .icon-check {
+      display: none;
+
+    }
+  </style>
+</head>
+
+<body>
+  <section class="hero hero-body is-dark container">
+    <h1 class="title">India Location Info</h1>
+    <h2 class="subtitle">Enter the pincode to get a location info</h2>
+
+    <form id="zip-form">
+
+      <div class="field">
+        <div class="control has-icons-left has-icons-right">
+          <input class="input zip is-lg" type="text" placeholder="Enter Zipcode">
+          <span class="icon is-small is-left">
+            <i class="fas fa-map-pin"></i>
+          </span>
+          <span class="icon is-small is-right icon-check">
+            <i class="fas fa-check"></i>
+          </span>
+          <span class="icon is-small is-right icon-remove">
+            <i class="fas fa-times"></i>
+          </span>
+        </div>
+      </div>
+
+
+    </form>
+  </section>
+
+  <br>
+  <div class="container">
+    <div id="output"></div>
+  </div>
+
+  <script>
+    // Listen for submit
+    document.querySelector('#zip-form').addEventListener('submit', getLocationInfo);
+
+    // Listen for delete
+    document.querySelector('body').addEventListener('click', deleteLocation);
+
+    // Functions
+    function getLocationInfo(e) {
+      e.preventDefault();
+
+      // get zip value from input
+      const zip = document.querySelector('.zip').value;
+
+      // Make request
+      fetch(`http://api.zippopotam.us/in/${zip}`)
+        .then(Response => {
+          if (Response.status != 200) {
+            showIcon('remove');
+            document.querySelector('#output').innerHTML = `
+      <article class="message is-danger">
+        <div class="message-body">
+        Invalid Zipcode Please try again
+        </div>
+        </article>
+      `;
+            throw error(Response.statusText);
+          } else {
+            showIcon('check');
+            return Response.json();
+          }
+        })
+        .then(data => {
+
+          // Show Location info
+          let output = '';
+          data.places.forEach(place => {
+            output += `
+     <article class="message is-primary">
+      <div class="message-header">
+        <p>Location Info</p>
+        <button class="delete"></button>
+        </div>
+        <div class="message-body">
+          <ul>
+            <li><strong>City: </strong>${place['place name']}</li>
+            <li><strong>State: </strong>${place['state']}</li>
+            <li><strong>Longitude: </strong>${place['longitude']}</li>
+            <li><strong>Latitude: </strong>${place['latitude']}</li>
+            </ul>
+          </div>
+      </article>
+     `;
+
+          });
+
+          //  insert into output div
+          document.querySelector('#output').innerHTML = output;
+
+        })
+        .catch(err => console.log(err));
+    }
+
+    // Show check or remove icon
+
+    function showIcon(icon) {
+
+      // Clear icons
+      document.querySelector('.icon-remove').style.display = 'none';
+      document.querySelector('.icon-check').style.display = 'none';
+
+      // Show the correct icons
+      document.querySelector(`.icon-${icon}`).style.display = 'inline-flex';
+
+    };
+
+    // Delete location Box
+    function deleteLocation(e) {
+      if (e.target.className == 'delete') {
+        document.querySelector('.message').remove();
+        document.querySelector('.zip').value = '';
+        document.querySelector('.icon-check').remove();
+      }
+    };
+
+
+  </script>
+</body>
+
+</html>
